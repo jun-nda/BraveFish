@@ -2,6 +2,19 @@
 #include "Walnut/EntryPoint.h"
 
 #include "Walnut/Image.h"
+#include "Walnut/Random.h"
+#include "Walnut/Timer.h"
+
+using namespace Walnut;
+
+void DrawLine( int x0, int y0, int x1, int y1, uint32_t* m_ImageData, uint32_t color, uint32_t width){
+	for( int x = x0; x <= x1; x++ ) {
+		float t = ( x - x0 ) / (float)( x1 - x0 );
+		int y = y0 * ( 1. - t ) + y1 * t;
+		m_ImageData[ y * width + x ] = color;
+
+	}
+}
 
 class ExampleLayer : public Walnut::Layer
 {
@@ -9,11 +22,51 @@ public:
 	virtual void OnUIRender() override
 	{
 		ImGui::Begin("Hello");
-		ImGui::Button("Button");
+		ImGui::Text( "Last render: %.3fms", m_LastRenderTime );
+		if( ImGui::Button( "Render" ) ){
+			Render( );
+		}
 		ImGui::End();
 
-		ImGui::ShowDemoWindow();
+		
+		ImGui::Begin( "Viewport" );
+
+		m_ViewportWidth = ImGui::GetContentRegionAvail( ).x;
+		m_ViewportHeight = ImGui::GetContentRegionAvail( ).y;
+
+		if( m_Image )
+			ImGui::Image( m_Image->GetDescriptorSet( ), { (float)m_Image->GetWidth( ), (float)m_Image->GetHeight( ) } );
+		
+		ImGui::End();
+
+		//Render();
 	}
+
+	void Render( ){
+		Timer timer;
+
+		if( !m_Image || m_ViewportWidth != m_Image->GetWidth( ) || m_ViewportHeight != m_Image->GetHeight( ) )
+		{
+			m_Image = std::make_shared<Image>( m_ViewportWidth, m_ViewportHeight, ImageFormat::RGBA );
+			delete[ ] m_ImageData;
+			m_ImageData = new uint32_t[ m_ViewportWidth * m_ViewportHeight ];
+		}
+
+		DrawLine( 13, 20, 80, 40, m_ImageData, 0xff000000, m_ViewportWidth );
+
+		m_Image->SetData( m_ImageData );
+
+		m_LastRenderTime = timer.ElapsedMillis( );
+	}
+
+
+private:
+	std::shared_ptr<Image> m_Image;
+
+	uint32_t* m_ImageData = nullptr;
+	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
+
+	float m_LastRenderTime = 0.0f;
 };
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
