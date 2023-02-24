@@ -255,6 +255,11 @@ public:
 			m_ImageData = new uint32_t[ ( m_ViewportWidth + 10 ) * ( m_ViewportHeight + 10 ) ];
 		}
 
+		for( uint32_t i = 0; i < m_ViewportWidth * m_ViewportHeight; i++ )
+		{
+			m_ImageData[ i ] = 0xff000000;
+		}
+
 		// 1. init z-buffer
 		int* zbuffer = new int[ ( m_ViewportWidth + 10 ) * ( m_ViewportHeight + 10 ) ];
 		for( int i = m_ViewportWidth * m_ViewportHeight; i--; zbuffer[ i ] = -std::numeric_limits<float>::max( ) );
